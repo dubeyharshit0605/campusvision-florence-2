@@ -96,12 +96,21 @@ class ArtifactStore:
         self._append_csv(record)
         return RunArtifacts(json_path, image_path, self.csv_path)
 
-    def save_failure(self, record: RunRecord) -> RunArtifacts:
+    def save_failure(
+        self,
+        record: RunRecord,
+        *,
+        generated_text: str = "",
+        parsed: dict[str, object] | None = None,
+    ) -> RunArtifacts:
         record.status = "failed"
         run_dir = self._run_directory(record.run_id)
         json_path = run_dir / "result.json"
         record.output_paths = {"json": str(json_path)}
-        self._write_json(json_path, {"record": record})
+        payload: dict[str, object] = {"record": record}
+        if generated_text or parsed:
+            payload.update({"generated_text": generated_text, "parsed": parsed or {}})
+        self._write_json(json_path, payload)
         self._append_csv(record)
         return RunArtifacts(json_path, None, self.csv_path)
 
