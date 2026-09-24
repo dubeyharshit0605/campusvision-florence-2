@@ -250,13 +250,6 @@ class InferenceService:
             record.rss_after_mb = rss_megabytes()
             record.accelerator_memory_mb = accelerator_memory_megabytes(choice.device.type)
             record.total_seconds = time.perf_counter() - started
-            artifacts = self.artifact_store.save_success(
-                record,
-                generated_text=generated_text,
-                parsed=parsed,
-                annotated_image=annotated,
-            )
-            return InferenceOutcome(annotated, generated_text, parsed, artifacts, record)
         except Exception as exc:
             record.status = "failed"
             record.error = f"{type(exc).__name__}: {exc}"
@@ -272,6 +265,18 @@ class InferenceService:
                 "Check the model download, available memory, and selected device."
             )
             raise InferenceError(message) from exc
+
+        try:
+            artifacts = self.artifact_store.save_success(
+                record,
+                generated_text=generated_text,
+                parsed=parsed,
+                annotated_image=annotated,
+            )
+        except Exception as exc:
+            message = f"Could not save inference artifacts: {exc}"
+            raise InferenceError(message) from exc
+        return InferenceOutcome(annotated, generated_text, parsed, artifacts, record)
 
 
 _SERVICE: InferenceService | None = None

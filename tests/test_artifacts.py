@@ -75,3 +75,15 @@ def test_concurrent_csv_appends_are_complete(tmp_path) -> None:
     assert len(rows) == 20
     assert {row["run_id"] for row in rows} == {f"run-{index}" for index in range(20)}
     assert all(row["status"] == "failed" for row in rows)
+
+
+def test_csv_neutralizes_spreadsheet_formula_values(tmp_path) -> None:
+    store = ArtifactStore(tmp_path)
+    record = make_record("formula-run", status="failed")
+    record.phrase = '=HYPERLINK("https://example.invalid")'
+
+    store.save_failure(record)
+
+    with (tmp_path / "experiments.csv").open(newline="", encoding="utf-8") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["phrase"].startswith("'=")

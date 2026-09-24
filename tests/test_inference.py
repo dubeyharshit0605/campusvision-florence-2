@@ -53,6 +53,17 @@ class FailingBackend(ControlledBackend):
         raise RuntimeError("controlled backend failure")
 
 
+class FailingSuccessStore:
+    def __init__(self) -> None:
+        self.failure_save_called = False
+
+    def save_success(self, *args, **kwargs):
+        raise OSError("disk full")
+
+    def save_failure(self, *args, **kwargs):
+        self.failure_save_called = True
+
+
 def test_auto_device_priority_and_cpu_dtype(monkeypatch) -> None:
     monkeypatch.setattr(torch.cuda, "is_available", Mock(return_value=True))
     monkeypatch.setattr(torch.backends.mps, "is_available", Mock(return_value=True))
@@ -168,3 +179,13 @@ def test_render_failure_preserves_generated_result(tmp_path, monkeypatch) -> Non
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["generated_text"].startswith("object")
     assert payload["parsed"]["<OD>"]["labels"] == ["object"]
+
+
+def test_artifact_failure_does_not_attempt_a_second_write(tmp_path) -> None:
+    store = FailingSuccessStore()
+    service = InferenceService(ControlledBackend(), store, requested_device="cpu")
+
+    with pytest.raises(InferenceError, match="save inference artifacts"):
+        service.run(Image.new("RGB", (80, 60)), "Caption")
+
+    assert store.failure_save_called is False

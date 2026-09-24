@@ -134,6 +134,9 @@ class ArtifactStore:
         row = to_jsonable(record)
         for key in ("library_versions", "generation_settings", "output_paths"):
             row[key] = json.dumps(row[key], ensure_ascii=False, sort_keys=True)
+        for key, value in row.items():
+            if isinstance(value, str) and value.startswith(("=", "+", "-", "@", "\t", "\r")):
+                row[key] = f"'{value}"
         fieldnames = list(row)
         self.root.mkdir(parents=True, exist_ok=True)
         with _CSV_LOCK:
