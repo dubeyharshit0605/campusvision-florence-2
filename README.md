@@ -105,6 +105,24 @@ The model code is loaded from the immutable checkpoint revision
 `f6c1a25888ffc1d945ee8a1a77ac833c7303d46e`. Review that revision before changing it because
 the checkpoint uses trusted remote Python code.
 
+## Modal deployment
+
+Modal is the recommended public deployment when a Hugging Face compute Space is not
+available. The deployment uses 2 shared CPU cores, 4 GB memory, scale-to-zero after five
+idle minutes, one application container, and persistent Volumes for the pinned model cache
+and generated run artifacts.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[deploy]"
+.\.venv\Scripts\modal.exe setup
+.\.venv\Scripts\modal.exe deploy modal_app.py
+```
+
+The final command prints the permanent public `modal.run` URL. The first request can take
+several minutes while the pinned Florence-2 checkpoint downloads into the persistent cache;
+later containers reuse it. Modal is usage-based, so review the workspace usage dashboard
+even when deployment activity is expected to remain inside the included monthly credit.
+
 ## Output layout
 
 ```text
