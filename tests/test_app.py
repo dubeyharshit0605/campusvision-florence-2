@@ -21,7 +21,7 @@ class SuccessfulService:
         json_path.write_text("{}", encoding="utf-8")
         return SimpleNamespace(
             annotated_image=image,
-            generated_text="a campus library",
+            generated_text="</s><s>a campus library</s>",
             parsed={"<CAPTION>": "a campus library"},
             artifacts=SimpleNamespace(image_path=image_path, json_path=json_path),
             record=SimpleNamespace(

@@ -69,14 +69,18 @@ def _clamp(value: float, maximum: int) -> int:
     return round(min(max(value, 0.0), float(maximum - 1)))
 
 
+def clean_label(value: object) -> str:
+    return str(value).replace("</s>", "").replace("<s>", "").strip()
+
+
 def _label(labels: object, index: int) -> str:
     if (
         isinstance(labels, Sequence)
         and not isinstance(labels, (str, bytes))
         and index < len(labels)
-        and str(labels[index]).strip()
+        and clean_label(labels[index])
     ):
-        return str(labels[index]).strip()
+        return clean_label(labels[index])
     return f"region {index + 1}"
 
 
@@ -111,6 +115,8 @@ def render_result(
     overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
     labels = body.get("labels", [])
+    box_labels = body.get("bboxes_labels", labels)
+    polygon_labels = body.get("polygons_labels", labels)
 
     boxes = body.get("bboxes", [])
     if isinstance(boxes, Sequence):
@@ -127,7 +133,7 @@ def render_result(
             )
             color = (*COLORS[index % len(COLORS)], 255)
             draw.rectangle(points, outline=color, width=3)
-            _draw_label(draw, (points[0], points[1]), _label(labels, index), color)
+            _draw_label(draw, (points[0], points[1]), _label(box_labels, index), color)
 
     quadrilaterals = body.get("quad_boxes", [])
     if isinstance(quadrilaterals, Sequence):
@@ -151,6 +157,6 @@ def render_result(
         ]
         rgb = COLORS[index % len(COLORS)]
         draw.polygon(points, fill=(*rgb, 72), outline=(*rgb, 255))
-        _draw_label(draw, points[0], _label(labels, index), (*rgb, 255))
+        _draw_label(draw, points[0], _label(polygon_labels, index), (*rgb, 255))
 
     return Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")

@@ -1,6 +1,6 @@
 from PIL import Image
 
-from campusvision.imaging import normalize_image, render_result
+from campusvision.imaging import clean_label, normalize_image, render_result
 from campusvision.tasks import get_task
 
 
@@ -90,3 +90,23 @@ def test_invalid_coordinates_and_empty_results_are_safe() -> None:
     assert empty.tobytes() == source.tobytes()
     assert invalid is not source
     assert empty is not source
+
+
+def test_open_vocabulary_uses_its_specific_box_labels() -> None:
+    source = Image.new("RGB", (160, 80), "white")
+    parsed = {
+        "<OPEN_VOCABULARY_DETECTION>": {
+            "bboxes": [[0, 15, 100, 60]],
+            "bboxes_labels": ["directional arrow"],
+            "polygons": [],
+            "polygons_labels": [],
+        }
+    }
+
+    rendered = render_result(source, get_task("Open Vocabulary Detection"), parsed)
+
+    assert rendered.getpixel((70, 16)) != (255, 255, 255)
+
+
+def test_display_labels_remove_model_control_tokens() -> None:
+    assert clean_label("</s><s>CAMPUS LIBRARY</s>") == "CAMPUS LIBRARY"

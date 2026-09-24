@@ -6,6 +6,7 @@ import gradio as gr
 from PIL import Image
 
 from campusvision.contracts import TaskInputError
+from campusvision.imaging import clean_label
 from campusvision.inference import (
     DeviceUnavailableError,
     InferenceError,
@@ -53,7 +54,7 @@ def run_from_ui(
     image_path = outcome.artifacts.image_path
     return (
         outcome.annotated_image,
-        outcome.generated_text,
+        clean_label(outcome.generated_text),
         outcome.parsed,
         str(image_path) if image_path else None,
         str(outcome.artifacts.json_path),
