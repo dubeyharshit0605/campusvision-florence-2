@@ -40,4 +40,5 @@ def test_modal_entrypoint_binds_public_container_port(monkeypatch, tmp_path):
         "server_name": "0.0.0.0",
         "server_port": 8123,
         "share": False,
+        "allowed_paths": [str(tmp_path)],
     }

@@ -14,7 +14,12 @@ def main() -> None:
     output_dir = os.environ.get("CAMPUSVISION_OUTPUT_DIR", "/data/outputs")
     demo = build_app(service=get_inference_service(output_dir=output_dir))
     demo.queue(default_concurrency_limit=1)
-    demo.launch(server_name="0.0.0.0", server_port=port, share=False)
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=port,
+        share=False,
+        allowed_paths=[output_dir],
+    )
 
 
 if __name__ == "__main__":
